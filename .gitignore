@@ -27,3 +27,7 @@ Thumbs.db
 results/analysis/
 
 *.png
+
+nohup.out
+
+*.nohup

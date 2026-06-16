@@ -1,0 +1,537 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  KAIST Benchmark Problem 1A  -  MOX-Fuel-Loaded Small PWR Core
+%  (MOX Fuel with Zoning)
+%
+%  Source : N. Z. Cho, "Benchmark Problem 1A", KAIST/NurapT
+%           http://nurapt.kaist.ac.kr/benchmark/
+%           (PDF file: kaist_ben1a.pdf, June 23, 2000)
+%
+%  Problem statement
+%  -----------------
+%  Calculate the effective multiplication factor  k_eff  and the
+%  assembly / pin power distribution of a small PWR core partially
+%  loaded with MOX fuel.
+%
+%  Two cases are defined in the benchmark:
+%      Case 1 (ARI) : all control rods IN  (B4C in 24 guide tubes)
+%      Case 2 (ARO) : all control rods OUT (water in guide tubes)
+%
+%  This input is the  ARO  (all-rods-out)  baseline case.  To switch
+%  to the ARI case, run the file with  -ifc  flag and re-direct
+%  `guide_tube` -> `ctrl_rod` in the assembly lattices (see
+%  `cross_reference.md` for the exact sed command).
+%
+%  Geometry summary
+%  ----------------
+%  17 x 17 fuel assembly lattice:
+%       - 264 fuel pins
+%       - 24 control-rod guide tubes
+%       -  1 instrumentation guide tube
+%       - pin pitch  1.26 cm
+%       - assembly pitch  21.42 cm
+%       - active fuel length  365.76 cm
+%
+%  Core arrangement
+%  ----------------
+%  1/4-core model (4 x 4 lattice, 13 fueled assemblies, 3 reflector
+%  cells at the outer corner).  Reflective BC on the inner (x=0, y=0)
+%  surfaces, vacuum on the outer surfaces.  Baffle and reflector are
+%  water / SS-304.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%---------------- RUN PARAMETERS ----------------------------------
+set title "KAIST Benchmark Problem 1A - MOX-Fuel-Loaded Small PWR Core (MOX Fuel with Zoning)"
+set acelib "sss_endfb7.xsdata"
+set power  9.0000E+07          % 900 MWth total core thermal power
+
+% Population and cycles
+set pop   20000 500 50         % 20k neutrons, 500 cycles, 50 inactive
+
+% Boundary conditions: 1/4-core symmetry (reflective on x and y,
+% vacuum on z)
+set bc    1 1 2
+
+set nbuf  50                   % neutron buffer (cycles between batches)
+set pbuf  200                  % precursor buffer
+set gcu   -1                   % group constants (none -> eigenvalue)
+set inventory 1                % print isotope inventories
+set printm  0                  % do not print material compositions
+set fsplit 2                   % fission source entropy
+set srcnorm 1                  % normalize source
+
+
+%==================================================================
+%                       MATERIALS
+%==================================================================
+%  All number densities below were calculated from the weight-percent
+%  specifications of the KAIST PDF using ENDF/B-VIII.0 atomic weights.
+%
+%  Material entries are given as atom densities (atoms / barn-cm) with
+%  a negative sign, as accepted by Serpent 2.
+%==================================================================
+
+% --- Coolant / moderator :  H2O at 570 K, 800 ppm natural B  -----
+mat cool     -7.304749E-02  tmp 570.0
+    H1      -4.863855E-02
+    H2      -5.594076E-06
+    O16     -2.431161E-02
+    O17     -9.260917E-06
+    O18     -4.996021E-05
+    B10     -6.469242E-06
+    B11     -2.603951E-05
+
+% --- He gas plenum (320 psig, 700 K)  ---------------------------
+mat hegap    -2.387739E-04  tmp 700.0   % g/cm^3 equivalent at 320 psig
+    He4     -2.387739E-04
+
+% --- Zircaloy-4 cladding  ----------------------------------------
+%  Zr 97.91 w/o, Sn 1.59 w/o, Fe 0.5 w/o ; density 6.44 g/cm^3
+mat clad     -4.250609E-02  tmp 630.0
+    Zr90    -2.173036E-02
+    Zr91    -4.686686E-03
+    Zr92    -7.085796E-03
+    Zr94    -7.027791E-03
+    Zr96    -1.108577E-03
+    Sn112   -5.345112E-06
+    Sn114   -3.573086E-06
+    Sn115   -1.824652E-06
+    Sn116   -7.735855E-05
+    Sn117   -4.051069E-05
+    Sn118   -1.266742E-04
+    Sn119   -4.454850E-05
+    Sn120   -1.675552E-04
+    Sn122   -2.342065E-05
+    Sn124   -2.881527E-05
+    Fe54    -2.101278E-05
+    Fe56    -3.180890E-04
+    Fe57    -7.216979E-06
+    Fe58    -9.439040E-07
+
+% --- SS-304 reflector baffle  ------------------------------------
+%  Fe 70.351%, Cr 19.152%, Ni 8.483%, Mn 2.014% ; density 7.82 g/cm^3
+mat baffle   -8.521471E-02  tmp 630.0
+    Fe54    -3.590084E-03
+    Fe56    -5.434628E-02
+    Fe57    -1.233038E-03
+    Fe58    -1.612683E-04
+    Cr50    -7.846220E-04
+    Cr52    -1.454965E-02
+    Cr53    -1.618646E-03
+    Cr54    -3.954586E-04
+    Ni58    -4.694226E-03
+    Ni60    -1.747992E-03
+    Ni61    -7.474347E-05
+    Ni62    -2.344243E-04
+    Ni64    -5.786650E-05
+    Mn55    -1.726410E-03
+
+% --- B4C control-rod absorber  -----------------------------------
+%  Natural B;  density 1.84 g/cm^3 (73% of theoretical 2.52 g/cm^3)
+mat b4c      -1.002697E-01  tmp 600.0
+    B10     -1.596293E-02
+    B11     -6.425279E-02
+    C12     -1.983935E-02
+    C13     -2.145771E-04
+
+% --- UOX-1 fuel (UO2, 2.0 w/o U-235)  ----------------------------
+mat fuel_uox1  -6.960642E-02  tmp 900.0
+    U235    -4.697604E-04
+    U238    -2.272751E-02
+    O16     -4.640915E-02
+
+% --- UOX-2 fuel (UO2, 3.3 w/o U-235)  ----------------------------
+mat fuel_uox2  -6.961654E-02  tmp 900.0
+    U235    -7.750895E-04
+    U238    -2.242559E-02
+    O16     -4.641587E-02
+
+% --- MOX-1 central zone (8.7 w/o Pu-tot)  ------------------------
+mat fuel_mox1_c  -6.955625E-02  tmp 900.0
+    U235    -4.825494E-05
+    U238    -2.112810E-02
+    Pu238   -3.692670E-05
+    Pu239   -1.164039E-03
+    Pu240   -4.502261E-04
+    Pu241   -2.203903E-04
+    Pu242   -1.111281E-04
+    Am241   -2.152093E-05
+    O16     -4.637567E-02
+
+% --- MOX-1 intermediate zone (7.0 w/o Pu-tot)  -------------------
+mat fuel_mox1_i  -6.956335E-02  tmp 900.0
+    U235    -4.915277E-05
+    U238    -2.152121E-02
+    Pu238   -2.971073E-05
+    Pu239   -9.365705E-04
+    Pu240   -3.622459E-04
+    Pu241   -1.773231E-04
+    Pu242   -8.941222E-05
+    Am241   -1.731546E-05
+    O16     -4.638041E-02
+
+% --- MOX-1 peripheral zone (4.3 w/o Pu-tot)  ---------------------
+mat fuel_mox1_p  -6.957463E-02  tmp 900.0
+    U235    -5.057868E-05
+    U238    -2.214553E-02
+    Pu238   -1.825048E-05
+    Pu239   -5.753093E-04
+    Pu240   -2.225176E-04
+    Pu241   -1.089247E-04
+    Pu242   -5.492345E-05
+    Am241   -1.063640E-05
+    O16     -4.638796E-02
+
+% --- Burnable absorber : (U,Gd)O2 with 9.0 w/o Gd2O3  ------------
+%  U-235 0.711 w/o (relative to U), Gd2O3 9.0 w/o of total
+%  Density 10.06 g/cm^3
+mat fuel_gd   -7.248668E-02  tmp 900.0
+    U235    -1.617790E-04
+    U238    -2.230658E-02
+    Gd152   -9.031142E-06
+    Gd154   -9.483527E-05
+    Gd155   -6.683738E-04
+    Gd156   -9.303008E-04
+    Gd157   -7.090185E-04
+    Gd158   -1.119972E-03
+    Gd160   -9.844944E-04
+    O16     -4.550230E-02
+
+
+%==================================================================
+%                       PIN UNIVERSES
+%==================================================================
+%  Pin-type definitions; radii are in cm.
+%  Layers are listed from inner radius outward.
+%==================================================================
+
+% --- Standard fuel pin (UOX or MOX, or Gd BA)  -------------------
+pin fuel_uox1
+    fuel_uox1   0.4095
+    hegap       0.4180
+    clad        0.4750
+
+pin fuel_uox2
+    fuel_uox2   0.4095
+    hegap       0.4180
+    clad        0.4750
+
+pin fuel_mox1_c
+    fuel_mox1_c 0.4095
+    hegap       0.4180
+    clad        0.4750
+
+pin fuel_mox1_i
+    fuel_mox1_i 0.4095
+    hegap       0.4180
+    clad        0.4750
+
+pin fuel_mox1_p
+    fuel_mox1_p 0.4095
+    hegap       0.4180
+    clad        0.4750
+
+pin fuel_gd
+    fuel_gd     0.4095
+    hegap       0.4180
+    clad        0.4750
+
+% --- Instrumentation guide tube  ---------------------------------
+%  r0-r1 : water (r1 = 0.5715)
+%  r1-r2 : clad  (r2 = 0.6120)
+pin itube
+    cool    0.5715
+    clad    0.6120
+
+% --- Control rod (B4C inside a guide tube)  ----------------------
+%  r0-r1 : B4C         (r1 = 0.3823)
+%  r1-r2 : clad        (r2 = 0.4839)
+%  r2-r3 : water       (r3 = 0.5715)
+%  r3-r4 : clad (guide)(r4 = 0.6120)
+pin ctrl_rod
+    b4c     0.3823
+    clad    0.4839
+    cool    0.5715
+    clad    0.6120
+
+% --- Empty (water-filled) guide tube (ARO case)  -----------------
+pin guide_tube
+    cool    0.5715
+    clad    0.6120
+
+
+%==================================================================
+%                 FUEL ASSEMBLY LATTICES (17 x 17)
+%==================================================================
+%  Each assembly is a 17x17 square lattice with pitch 1.26 cm.
+%  24 guide tubes are placed in 4 symmetric clusters around the
+%  central instrumentation tube.  The exact guide-tube positions
+%  are taken from the standard 17 x 17 PWR geometry as illustrated
+%  in the KAIST benchmark PDF.
+%
+%  Where applicable, Gd BA rods are placed in a symmetric pattern:
+%    - 16 Gd rods for UOX-2 (BA16) - 4 x 4 cluster arrangement
+%    -  8 Gd rods for MOX-1 (BA8)  - 2 x 4 cluster arrangement
+%       (B positions: MOX 8.7% / Gd, A positions: MOX 7.0% / Gd)
+%==================================================================
+
+% -----------  Standard 17x17 guide-tube + instrument-tube layout
+%  Row 0 = top, Row 16 = bottom (in y); Col 0 = left, Col 16 = right
+%
+%  Notation:  G = guide_tube (ARO) [or ctrl_rod for ARI]
+%             I = instrument tube (itube)
+%             . = fuel pin
+%
+%  Row  0:  . . . . . . . . . . . . . . . .
+%  Row  1:  . . . . . . . . . . . . . . . .
+%  Row  2:  . . G . . G . . G . . G . . G . .
+%  Row  3:  . . . . . . . . . . . . . . . .
+%  Row  4:  . . . . . . . . . . . . . . . .
+%  Row  5:  . . G . . G . . G . . G . . G . .
+%  Row  6:  . . . . . . . . . . . . . . . .
+%  Row  7:  . . . . . . . . I . . . . . . .
+%  Row  8:  . . G . . G . . G . . G . . G . .
+%  Row  9:  . . . . . . . . . . . . . . . .
+%  Row 10:  . . . . . . . . . . . . . . . .
+%  Row 11:  . . G . . G . . G . . G . . G . .
+%  Row 12:  . . . . . . . . . . . . . . . .
+%  Row 13:  . . . . . . . . . . . . . . . .
+%  Row 14:  . . G . . G . . G . . G . . G . .
+%  Row 15:  . . . . . . . . . . . . . . . .
+%  Row 16:  . . . . . . . . . . . . . . . .
+%
+%  Total non-fuel positions: 24 (G) + 1 (I) = 25, leaving 264 fuel
+%  pin positions.
+
+% ----------  asy_uox1  :  standard UOX-1 (no BA, no CR)  ---------
+lat asy_uox1   1   17  17  1.2600
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 itube fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1 guide_tube fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1 fuel_uox1
+
+% ----------  asy_uox2  :  standard UOX-2 (no BA, no CR)  ---------
+lat asy_uox2   1   17  17  1.2600
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 itube fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+
+% ----------  asy_mox1z  :  MOX-1 with 3 Pu-enrichment zones  ----
+%  Peripheral  (4.3 w/o Pu-tot) : outer 2 rings + instrument tube row/col
+%  Intermediate (7.0 w/o Pu-tot) : 1-ring  around the central 3x3
+%  Central     (8.7 w/o Pu-tot) : central 3x3 (excluding the
+%                                 instrument tube at the center)
+%
+%  17x17 lattice, instrument tube at (8,8), 24 guide tubes in the
+%  standard 4-cluster pattern.
+lat asy_mox1z  1   17  17  1.2600
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_i fuel_mox1_c fuel_mox1_c fuel_mox1_c fuel_mox1_i fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_i fuel_mox1_c itube fuel_mox1_c fuel_mox1_i guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_i fuel_mox1_c fuel_mox1_c fuel_mox1_c fuel_mox1_i fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+
+% ----------  asy_uox2gd  :  UOX-2 with 16 Gd2O3 BA rods  ---------
+%  16 Gd BA rods in 4 horizontal rows of 4 rods each.
+%  Rows chosen (in the 0..16 lattice): 2, 5, 11, 14
+%  Columns chosen : 3, 4, 12, 13
+%  (avoids overlap with the standard 24-guide-tube positions)
+lat asy_uox2gd 1   17  17  1.2600
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 guide_tube fuel_gd fuel_gd guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_gd fuel_gd guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 guide_tube fuel_gd fuel_gd guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_gd fuel_gd guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 itube fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 guide_tube fuel_gd fuel_gd guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_gd fuel_gd guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 guide_tube fuel_gd fuel_gd guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_gd fuel_gd guide_tube fuel_uox2 fuel_uox2 guide_tube fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2 fuel_uox2
+
+% ----------  asy_mox1z_ba8 :  MOX-1 with 8 Gd2O3 BA rods  --------
+%  8 Gd BA rods in 2 horizontal rows of 4 rods each (rows 5 and 11).
+%  The BA rods replace the 7.0 w/o (A) and 8.7 w/o (B) MOX positions
+%  in the standard 3-zone MOX layout.
+lat asy_mox1z_ba8  1  17  17  1.2600
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p guide_tube fuel_gd fuel_gd guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_gd fuel_gd guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_i fuel_mox1_c fuel_mox1_c fuel_mox1_c fuel_mox1_i fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_i fuel_mox1_c itube fuel_mox1_c fuel_mox1_i guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_i fuel_mox1_c fuel_mox1_c fuel_mox1_c fuel_mox1_i fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_i fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p guide_tube fuel_gd fuel_gd guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_gd fuel_gd guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p guide_tube fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p fuel_mox1_p
+
+
+%==================================================================
+%            1/4 CORE LATTICE  (4 x 4, reflective BC)
+%==================================================================
+%  1/4 core with the corner of the full core at (0,0).  The lattice
+%  is 4x4 with pitch 21.42 cm.  The 13 fueled cells form a staircase
+%  pattern, with the 3 outer-corner cells (row 0, cols 2-3) being
+%  reflector (universe 0 = water outside the lattice).
+%
+%  Cells are listed from the +y outermost row (row 0 in the lattice)
+%  to the corner of the full core (row 3 = y=0).
+%
+%  Reading the KAIST benchmark 1/4-core diagram (PDF page 1), the
+%  assembly types are, in row 0..3 order (top to bottom in the PDF
+%  = outermost to innermost in the full core):
+%
+%  row 0 (outermost, 2 cells) :  UOX-1   UOX-1
+%  row 1 (3 cells)            :  MOX-1   UOX-2   UOX-1
+%  row 2 (4 cells)            :  UOX-2   MOX-1(BA8)   UOX-2   UOX-1
+%  row 3 (innermost = corner of full core, 4 cells) :
+%                                UOX-2(BA16)   UOX-2   MOX-1   UOX-1
+%
+%  The "(CR)" cells in the diagram mark UOX-2 assemblies that have a
+%  control-rod cluster in the ARI case; the geometry is otherwise
+%  identical.  For the ARO (default) case the 24 guide tubes are
+%  water-filled; for the ARI case they contain B4C rods.
+%==================================================================
+%  Origin (0, 0, 0) places the lattice corner at the geometric origin,
+%  which is the symmetry-corner of the full core.
+lat coreLat  1  4  4  21.4200  0.0  0.0  0.0
+asy_uox1   asy_uox1   0          0
+asy_mox1z  asy_uox2   asy_uox1   0
+asy_uox2   asy_mox1z_ba8  asy_uox2   asy_uox1
+asy_uox2gd asy_uox2   asy_mox1z  asy_uox1
+
+
+%==================================================================
+%                       SURFACES
+%==================================================================
+%  1/4 core square boundary (origin at the lattice corner = corner
+%  of the full core;  side = 4 * 21.42 = 85.68 cm)
+surf sX0      px        0.0000
+surf sX1      px       85.6800
+surf sY0      py        0.0000
+surf sY1      py       85.6800
+surf sX2      px       88.2000          % outer surface of the baffle
+surf sY2      py       88.2000
+surf sX3      px      104.1000          % outer surface of the reflector
+surf sY3      py      104.1000
+
+% Axial surfaces (active core is centered at z=0)
+surf pzBot    pz      -182.8800         % active-fuel bottom
+surf pzTop    pz       182.8800         % active-fuel top
+surf pzReflB  pz      -204.3000         % bottom of bottom reflector
+surf pzReflT  pz       204.3000         % top of top reflector
+
+
+%==================================================================
+%                          CELLS
+%==================================================================
+%  1/4 core cell - filled with the coreLat lattice.
+%  The lattice is positioned in the +x, +y region (corner of the
+%  full core is at x=0, y=0).  The 3 "0" cells in the lattice are
+%  void (universe 0) and are filled with the surrounding reflector
+%  water (cool) by the cell evaluator.
+cell cCore   coreLat   -sX1   sX0   -sY1   sY0   -pzTop  pzBot  fill coreLat  -1
+
+%  Stainless-steel baffle (2.52 cm thick) around the core.
+%  In the 1/4 model the baffle forms an L-shape in the +x, +y region,
+%  which we split into 3 cells (one for the +x side, one for the
+%  +y side, one for the outer corner).
+cell cBafX   baffle     sX1   -sX2   sY0   -sY1    pzBot  -pzTop
+cell cBafY   baffle     sX0   -sX1   sY1   -sY2    pzBot  -pzTop
+cell cBafC   baffle     sX1   -sX2   sY1   -sY2    pzBot  -pzTop
+
+%  Outer reflector (water, 18.9 cm thick = from sX2=88.20 to sX3=104.10)
+cell cRefl   cool      -sX3   sX0   -sY3   sY0    pzBot  -pzTop
+
+%  Axial reflectors (top and bottom of the active core)
+cell cReflB  cool      -sX3   sX0   -sY3   sY0    pzBot  -pzReflB
+cell cReflT  cool      -sX3   sX0   -sY3   sY0    pzReflT -pzTop
+
+%  Outside world
+cell cOut    outside    sX3   -sX3   sY3   -sY3   pzReflB -pzReflT
+
+
+%==================================================================
+%                     DETECTORS / OUTPUT
+%==================================================================
+%  Pin-power distribution detector  (axial-uniform, x-y plane)
+det pDetPin   dr  -8 void  fuel_uox1 fuel_uox2 fuel_mox1_p fuel_mox1_i fuel_mox1_c fuel_gd b4c
+     du  0.0  dv  0.0
+     dx  200  dy  200
+
+%  Assembly-power detector (radial, 1/4 core)
+det pDetAsy   dr  -8 void
+     du  0.0  dv  0.0
+     dx  4    dy  4
+
+%  Energy spectrum detector
+det pDetE     dr  -2 void fuel_uox1 fuel_uox2 fuel_mox1_p fuel_mox1_i fuel_mox1_c fuel_gd b4c cool
+     de  100  dg  500
+
+
+%==================================================================
+%                       PLOT OUTPUT
+%==================================================================
+%  XY plot of the core
+plot 1  2000  2000  0.0
+plot 2  2000  2000  0.0
+plot 3  2000  2000  182.8800
+
+
+%==================================================================
+%                      RUN CALCULATION
+%==================================================================
+%  Run the input from a terminal with:
+%     sss2 -omp 8 kaist_ben1a.ssp
+%==================================================================

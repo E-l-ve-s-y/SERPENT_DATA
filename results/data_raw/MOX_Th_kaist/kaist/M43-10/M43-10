@@ -1,0 +1,212 @@
+% ---------------------------------
+
+set title "kaist-M43-10"
+
+% --- No poisons
+% --- 15.5Mp
+% --- nom = fm 900K ; tm 570K ; boron 800 ; cr 1 
+
+include "/home/sy_lu/test/kaist/kaist_mat"
+include "/home/sy_lu/test/kaist/kaist_geo"
+
+% ---------------------------------
+
+% --- Single-isotope materials for detector response functions ---
+
+mat mat_u233   1.0  tmp 900
+92233.09c  1.0
+
+mat mat_u235   1.0  tmp 900
+92235.09c  1.0
+
+mat mat_u238   1.0  tmp 900
+92238.09c  1.0
+
+mat mat_pu239  1.0  tmp 900
+94239.09c  1.0
+
+mat mat_th232  1.0  tmp 900
+90232.09c  1.0
+
+mat mat_pa233  1.0  tmp 900
+91233.09c  1.0
+
+% ---------------------------------
+% --- Energy group structures -----
+
+ene 1 3 70 1E-9 2E1
+
+% ---------------------------------
+% --- Detector definitions --------
+
+det 1 de 1 dt -3
+
+det u235_fiss1  n  dm M43-10 dr 18 mat_u235  de 1
+det u235_fiss2  n  dm mox70 dr 18 mat_u235  de 1
+det u235_fiss3  n  dm mox87 dr 18 mat_u235  de 1
+
+det u238_cap1  n  dm M43-10 dr 102 mat_u238  de 1
+det u238_cap2  n  dm mox70 dr 102 mat_u238  de 1
+det u238_cap3  n  dm mox87 dr 102 mat_u238  de 1
+
+det pu239_fiss1  n  dm M43-10 dr 18 mat_pu239  de 1
+det pu239_fiss2  n  dm mox70 dr 18 mat_pu239  de 1
+det pu239_fiss3  n  dm mox87 dr 18 mat_pu239  de 1
+
+det th232_cap1  n  dm M43-10 dr 102 mat_th232  de 1
+det th232_cap2  n  dm mox70 dr 102 mat_th232  de 1
+det th232_cap3  n  dm mox87 dr 102 mat_th232  de 1
+
+det pa233_cap1  n  dm M43-10 dr 102 mat_pa233  de 1
+det pa233_cap2  n  dm mox70 dr 102 mat_pa233  de 1
+det pa233_cap3  n  dm mox87 dr 102 mat_pa233  de 1
+
+% --- Assembly outer boundary
+surf 301 sqc 0.0 0.0 10.71
+surf 302 sqc 0.0 0.0 10.75
+
+cell lt01 1001 fill 1000 -301
+cell gp01 1001 mod2      301 -302
+cell  corref 0 fill 1001 -302
+cell  out    0 outside    302
+
+% --- Lattice and symmetry
+
+lat 1000 1 0.0 0.0 17 17 1.26
+42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
+42 42 17 17 17 17 17 17 17 17 17 17 17 17 17 42 42
+42 17 17 17 17 21 17 17 21 17 17 21 17 17 17 17 42
+42 17 17 21 17 17 17 17 17 17 17 17 17 21 17 17 42
+42 17 17 17 17 18 18 18 18 18 18 18 17 17 17 17 42
+42 17 21 17 18 21 18 18 21 18 18 21 18 17 21 17 42
+42 17 17 17 18 18 18 18 18 18 18 18 18 17 17 17 42
+42 17 17 17 18 18 18 18 18 18 18 18 18 17 17 17 42
+42 17 21 17 18 21 18 18 21 18 18 21 18 17 21 17 42
+42 17 17 17 18 18 18 18 18 18 18 18 18 17 17 17 42
+42 17 17 17 18 18 18 18 18 18 18 18 18 17 17 17 42
+42 17 21 17 18 21 18 18 21 18 18 21 18 17 21 17 42
+42 17 17 17 17 18 18 18 18 18 18 18 17 17 17 17 42
+42 17 17 21 17 17 17 17 17 17 17 17 17 21 17 17 42
+42 17 17 17 17 21 17 17 21 17 17 21 17 17 17 17 42
+42 42 17 17 17 17 17 17 17 17 17 17 17 17 17 42 42
+42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42 42
+
+% --- Reflective boundary conditions
+
+set bc 2
+
+% --- Material subdivision
+
+div M43-10 sep 1
+div mox70 sep 1
+div mox87 sep 1
+
+% ---------------------------------
+
+% --- Burnup calculation ----------
+
+% --- Power density
+
+set powdens 38.4E-3
+
+% --- Burnup algorithm
+
+set pcc LELI
+
+% --- Depletion history (burnup steps in MWd/kgHM)
+
+dep butot
+ 0.1
+ 0.4
+ 0.7
+ 1.0
+ 1.3
+ 1.6
+ 2.0
+ 2.5
+ 3.0
+ 4.0
+ 5.0
+ 6.0
+ 7.0
+ 8.0
+ 10.0
+ 12.0
+ 14.0
+ 16.0
+ 18.0
+ 20.0
+ 24.0
+ 28.0
+ 34.0
+ 42.0
+ 50.0
+
+% --- Isotope list for inventory calculation (key isotopes)
+set inventory
+% --- Actinides
+902320    % Th-232
+902330    % Th-233
+912330    % Pa-233
+912340    % Pa-234
+922330    % U-233
+922340    % U-234
+922350    % U-235
+922360    % U-236
+922370    % U-237
+922380    % U-238
+932370    % Np-237
+932390    % Np-239
+942380    % Pu-238
+942390    % Pu-239
+942400    % Pu-240
+942410    % Pu-241
+942420    % Pu-242
+952410    % Am-241
+952430    % Am-243
+% --- Fission products (important for reactivity and decay heat)
+541350    % Xe-135
+621490    % Sm-149
+551370    % Cs-137
+380900    % Sr-90
+531290    % I-129
+601430    % Nd-143
+601450    % Nd-145
+
+% --- Parameters included in coefficient output
+
+set coefpara 0
+
+INF_CHIT              % 瞬发中子谱
+INF_DIFFCOE           % Diffusion coefficient 扩散系数
+INF_TOT               % Total cross section 总截面
+INF_ABS               % Absorption cross section (capture + fission) 吸收截面（俘获+裂变）
+INF_FISS              % Fission cross section 裂变截面
+INF_NSF               % Fission neutron production cross section 裂变中子产生截面
+INF_KAPPA             % Average deposited fission energy (MeV) 平均堆积裂变能量
+
+% ---------------------------------
+
+% --- Misc. options ---------------
+
+% --- Criticality cycles 
+
+set pop 200000 200 50
+
+% --- Geometry and mesh plots
+
+plot 3 5000 5000
+mesh 3 5000 5000
+
+% --- pin powers and pin power from factors
+
+surf ADF sqc 0.0 0.0 10.71
+set  adf 0   ADF full
+set  ppw 1001 1000
+
+% --- Cross section library file path:
+% --- Decay and fission yield libraries:  
+
+set acelib "/home/sy_lu/data/endfb7/sss_endfb7u.xsdata"  
+set declib "/home/sy_lu/data/endfb7/sss_endfb7.dec"     
+set nfylib "/home/sy_lu/data/endfb7/sss_endfb7.nfy"       

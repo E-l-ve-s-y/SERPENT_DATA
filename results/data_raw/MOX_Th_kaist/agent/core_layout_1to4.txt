@@ -1,0 +1,86 @@
+KAIST 1A - 1/4 Core Loading Map (4x4 lattice, assembly positions)
+================================================================================
+Source : N. Z. Cho, KAIST/NurapT Benchmark Problem 1A, page 1 (core map)
+Date   : 2026-06-12
+Format : ASCII, one row per line.  Coordinates are (col, row) with col
+         increasing to the right and row increasing to the top in the
+         ORIGINAL 1/4-core figure.  In Serpent the lattice is read
+         from top to bottom (highest y first), so the rows in the
+         .ssp file are listed in REVERSE order compared to the figure.
+
+READING THE FIGURE (1/4-core page 1 of the KAIST PDF)
+----------------------------------------------------
+   The 1/4-core figure shows a 4-row x 4-col block in the lower-left
+   quadrant of the full core.  The reflective boundary is on the
+   LEFT and BOTTOM of the figure (the two symmetry axes of the full
+   core pass through these edges); the reflector and vacuum
+   boundary are on the TOP and RIGHT.
+
+   Cells (read top to bottom in the PDF = outermost to innermost
+   in the full core):
+
+      row 0 (2 cells, outermost, closest to reflector)
+          col 2 : UOX-1
+          col 3 : UOX-1
+
+      row 1 (3 cells)
+          col 1 : MOX-1
+          col 2 : UOX-2 (CR)
+          col 3 : UOX-1
+
+      row 2 (4 cells)
+          col 0 : UOX-2 (CR)
+          col 1 : MOX-1 (BA8)
+          col 2 : UOX-2 (CR)
+          col 3 : UOX-1
+
+      row 3 (4 cells, innermost, corner of full core)
+          col 0 : UOX-2 (BA16)
+          col 1 : UOX-2 (CR)
+          col 2 : MOX-1
+          col 3 : UOX-1
+
+   Total: 5 x UOX-1,  4 x UOX-2(CR),  2 x MOX-1,  1 x MOX-1(BA8),  1 x UOX-2(BA16)
+
+ASSEMBLY COUNT
+--------------
+   13 fueled assemblies in the 1/4 core; 3 cells are void (universe 0)
+   at the outer corner of the 1/4 (where the reflector is).
+
+LATTICE FOR SERPENT  (4 x 4, pitch 21.42 cm, reflective on x=0 and y=0)
+---------------------------------------------------------------------
+   Serpent lists the lattice rows in REVERSE order (top of the figure
+   = highest y in Serpent = first row in the lat definition).  The
+   "0" cells (universe 0) are the void cells outside the 1/4 core.
+
+     lat coreLat  1  4  4  21.4200
+     asy_uox1   asy_uox1   0          0           <- row 0 in figure (y=+max)
+     asy_mox1z  asy_uox2   asy_uox1   0           <- row 1 in figure
+     asy_uox2   asy_mox1z_ba8  asy_uox2   asy_uox1   <- row 2 in figure
+     asy_uox2gd asy_uox2   asy_mox1z  asy_uox1   <- row 3 in figure (y=0, corner of full core)
+
+ASSEMBLY-TYPE NAMES
+-------------------
+     asy_uox1        :  Standard UOX-1 (no BA, no CR); 24 water-filled
+                        guide tubes + 1 instrument tube
+     asy_uox2        :  Standard UOX-2 (no BA, no CR); 24 water-filled
+                        guide tubes + 1 instrument tube
+     asy_uox2gd      :  UOX-2 with 16 Gd2O3 BA rods (BA16)
+     asy_mox1z       :  MOX-1 with 3 Pu-enrichment zones (no BA, no CR)
+     asy_mox1z_ba8   :  MOX-1 with 3 zones and 8 Gd2O3 BA rods (BA8)
+
+   "CR" assemblies (UOX-2(CR) in the figure) use the same
+   asy_uox2 lattice as plain UOX-2.  The "(CR)" label only
+   indicates that a control-rod cluster is allocated to that
+   assembly.  In the ARO case the guide tubes are water-filled
+   (same as asy_uox2).  In the ARI case the B4C rod is inserted
+   into the guide tubes -- the asy_uox2_ari lattice (not shown
+   here) should be used instead.
+
+VOID / UNIVERSE 0
+-----------------
+     Cells with universe '0' (3 cells, outer corner of the 1/4) are
+     outside the fueled region; they are filled with reflector
+     water (cool material) in the global cell definition.
+
+================================================================================

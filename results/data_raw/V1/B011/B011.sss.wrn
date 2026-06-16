@@ -1,0 +1,74 @@
+
+ ***** Warning: Serpent 1 input option outfile on line 254 of file B011.sss not used
+
+
+***** Mon May  4 18:05:26 2026 (seed = 1777889118132)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 40096.06c has 1 decay modes
+
+
+***** Mon May  4 18:05:26 2026 (seed = 1777889118132)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 40096.09c has 1 decay modes
+
+
+***** Mon May  4 18:05:26 2026 (seed = 1777889118132)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 48114.09c has 1 decay modes
+
+
+***** Mon May  4 18:05:26 2026 (seed = 1777889118132)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 52123.09c has 1 decay modes
+
+
+***** Mon May  4 18:05:26 2026 (seed = 1777889118132)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 52130.09c has 1 decay modes
+
+
+***** Mon May  4 18:05:26 2026 (seed = 1777889118132)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 54134.09c has 1 decay modes
+
+
+***** Mon May  4 18:05:26 2026 (seed = 1777889118132)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 54136.09c has 1 decay modes
+
+
+***** Mon May  4 18:05:26 2026 (seed = 1777889118132)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 58142.09c has 1 decay modes
+
+
+***** Mon May  4 18:05:26 2026 (seed = 1777889118132)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 64160.09c has 1 decay modes
+
+
+***** Mon May  4 18:05:26 2026 (seed = 1777889118132)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 300700 has 1 decay modes
+
+
+***** Mon May  4 22:56:21 2026 (seed = 1777889118132)
+Warning message from function SamplePrecursorGroup:
+
+Precursor group sampling failed (92233.09c, mt 18, E = 4.867931E-05)
+
+
+Simulation completed.
+------------------------------------------------------------
+Tue May  5 02:34:41 2026  (errors: 0, warnings: 11, notes: 1)
+

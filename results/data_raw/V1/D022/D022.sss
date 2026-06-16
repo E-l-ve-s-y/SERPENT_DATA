@@ -1,0 +1,255 @@
+% =============================================================================
+% 2D assembly template: HOMO
+% =============================================================================
+
+set title "D022_homo_Pu239+U235_Th0.900_Pu0.060_U2330.000_U235E0.02000"
+set acelib "/home/sy_lu/data/endfb7/sss_endfb7u.xsdata"
+
+% --- Fuel material (uniform for HOMO)
+mat fuel  -9.800 tmp 900 burn 1 rgb 200 50 50
+8016.09c   4.45986301e-02
+90232.09c  2.00693835e-02
+94239.09c  1.33795890e-03
+92235.09c  1.78394520e-05
+92238.09c  8.74133150e-04
+
+% 将燃料材料按栅元细分（每个燃料 pin 独立燃耗）
+div fuel sep 1
+
+% --- Gas gap (Helium)
+mat gas    2.68714E-05  tmp 900 rgb 155 155 0
+2004.06c   2.68714E-05
+
+% --- Cladding (Zircaloy-4 approximation)
+mat clad   4.32487E-02  tmp 900 rgb 55 55 55
+40090.06c  2.18865E-02
+40091.06c  4.77292E-03
+40092.06c  7.29551E-03
+40094.06c  7.39335E-03
+40096.06c  1.19110E-03
+24050.06c  3.30121E-06
+24052.06c  6.36606E-05
+24053.06c  7.21860E-06
+24054.06c  1.79686E-06
+26056.06c  1.36306E-04
+26057.06c  3.14789E-06
+26058.06c  4.18926E-07
+
+mat water   -0.76513  tmp 600 moder lwtr 1001
+1001.03c    0.66667
+8016.03c    0.33333
+
+therm lwtr lwe7.08t
+
+% =============================================================================
+% --- Single-isotope materials for detector response functions ---
+% =============================================================================
+
+mat mat_u233   1.0  tmp 900
+92233.09c  1.0
+
+mat mat_u235   1.0  tmp 900
+92235.09c  1.0
+
+mat mat_u238   1.0  tmp 900
+92238.09c  1.0
+
+mat mat_pu239  1.0  tmp 900
+94239.09c  1.0
+
+mat mat_th232  1.0  tmp 900
+90232.09c  1.0
+
+mat mat_pa233  1.0  tmp 900
+91233.09c  1.0
+
+% --- Pin definitions
+pin 12
+fuel     0.410
+gas      0.418
+clad     0.475
+water
+
+pin 21
+water    0.5715
+clad     0.6120
+water
+
+% --- Assembly outer boundary
+surf 301 sqc 0.0 0.0 10.71
+surf 302 sqc 0.0 0.0 10.75
+
+cell lt01 1001 fill 1000 -301
+cell gp01 1001 water      301 -302
+cell  corref 0 fill 1001 -302
+cell  out    0 outside    302
+
+lat 1000 1 0.0 0.0 17 17 1.260
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+12 12 12 12 12 21 12 12 21 12 12 21 12 12 12 12 12
+12 12 12 21 12 12 12 12 12 12 12 12 12 21 12 12 12
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+12 12 21 12 12 21 12 12 21 12 12 21 12 12 21 12 12
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+12 12 21 12 12 21 12 12 21 12 12 21 12 12 21 12 12
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+12 12 21 12 12 21 12 12 21 12 12 21 12 12 21 12 12
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+12 12 12 21 12 12 12 12 12 12 12 12 12 21 12 12 12
+12 12 12 12 12 21 12 12 21 12 12 21 12 12 12 12 12
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12 12
+
+% --- Reflective boundary conditions
+set bc 2
+
+% =============================================================================
+% --- Energy group structures -----
+% =============================================================================
+
+ene e2g 1
+1E-11 0.625E-6 20.0
+
+ene e7g 1
+1E-11 4.0E-9 1.0E-8 1.0E-7 0.625E-6 0.906E-3 3.0E-3 20.0
+
+% =============================================================================
+% --- Detector definitions --------
+% =============================================================================
+
+det flux_2g  n  de e2g  dl 1000
+det flux_7g  n  de e7g  dl 1000
+det flux_int  n  dl 1000
+
+det u235_fiss_2g  n  dr 18 mat_u235  de e2g  dl 1000
+det u235_fiss_7g  n  dr 18 mat_u235  de e7g  dl 1000
+
+det u233_fiss_2g  n  dr 18 mat_u233  de e2g  dl 1000
+det u233_fiss_7g  n  dr 18 mat_u233  de e7g  dl 1000
+
+det u238_cap_2g  n  dr 102 mat_u238  de e2g  dl 1000
+det u238_cap_7g  n  dr 102 mat_u238  de e7g  dl 1000
+
+det pu239_fiss_2g  n  dr 18 mat_pu239  de e2g  dl 1000
+det pu239_fiss_7g  n  dr 18 mat_pu239  de e7g  dl 1000
+
+det th232_cap_2g  n  dr 102 mat_th232  de e2g  dl 1000
+det th232_cap_7g  n  dr 102 mat_th232  de e7g  dl 1000
+
+det pa233_cap_2g  n  dr 102 mat_pa233  de e2g  dl 1000
+det pa233_cap_7g  n  dr 102 mat_pa233  de e7g  dl 1000
+
+surf ADF sqc 0.0 0.0 10.75
+set adf 0 ADF full
+set ppw 1001 1000
+
+% =============================================================================
+% Burnup and diagnostic outputs
+% =============================================================================
+
+% --- Power density (MW/kgHM) - typical LWR value
+set powdens 3.8E-2
+
+% --- Burnup algorithm
+set pcc LELI
+
+% --- Depletion history (burnup steps in MWd/kgHM)
+dep butot
+ 0.1
+ 0.4
+ 0.7
+ 1.0
+ 1.3
+ 1.6
+ 2.0
+ 2.5
+ 3.0
+ 4.0
+ 5.0
+ 6.0
+ 7.0
+ 8.0
+ 10.0
+ 12.0
+ 14.0
+ 16.0
+ 18.0
+ 20.0
+ 24.0
+ 28.0
+ 34.0
+ 42.0
+ 50.0
+
+% --- Isotope list for inventory calculation (key isotopes)
+set inventory
+% --- Actinides
+902320    % Th-232
+902330    % Th-233
+912330    % Pa-233
+912340    % Pa-234
+922330    % U-233
+922340    % U-234
+922350    % U-235
+922360    % U-236
+922370    % U-237
+922380    % U-238
+932370    % Np-237
+932390    % Np-239
+942380    % Pu-238
+942390    % Pu-239
+942400    % Pu-240
+942410    % Pu-241
+942420    % Pu-242
+952410    % Am-241
+952430    % Am-243
+% --- Fission products (important for reactivity and decay heat)
+541350    % Xe-135
+621490    % Sm-149
+551370    % Cs-137
+380900    % Sr-90
+531290    % I-129
+601430    % Nd-143
+601450    % Nd-145
+
+% =============================================================================
+% --- Group constant generation ---
+% =============================================================================
+
+% --- Universe for group constant generation:
+set gcu 1001 
+
+% --- Parameters included in coefficient output
+set coefpara 0
+INF_FLX               % Few-group flux (integral, normalized)
+INF_CHIT              % Prompt neutron spectrum
+INF_DIFFCOE           % Diffusion coefficient
+INF_TOT               % Total cross section
+INF_ABS               % Absorption cross section
+INF_FISS              % Fission cross section
+INF_NSF               % Fission neutron production cross section
+INF_KAPPA             % Average deposited fission energy
+INF_S0                % Scattering matrix 0th order
+INF_S1                % Scattering matrix 1st order
+
+set declib "/home/sy_lu/data/endfb7/sss_endfb7.dec"
+set nfylib "/home/sy_lu/data/endfb7/sss_endfb7.nfy"
+
+% =============================================================================
+% --- Misc. options ---------------
+% =============================================================================
+
+% --- Calculate poison cross sections
+set poi 1 4.624065332496000e+02
+
+% --- Criticality cycles
+set pop 200000 500 20
+
+% --- Geometry and mesh plots
+plot 3 500 500
+mesh 3 500 500
+
+set outfile "/home/sy_lu/Modular/cases/D022/D022"

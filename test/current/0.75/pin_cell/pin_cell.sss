@@ -1,0 +1,111 @@
+% --- Simple 2D PWR pin-cell geometry for Serpent tutorial
+
+/************************
+ * Material definitions *
+ ************************/
+
+% --- Fuel material, density 9.3624 g/cm3
+
+mat blanket     -9.3624
+90232.03c       1.92190E-02
+92234.03c       1.71043E-06
+92235.03c       2.11428E-04
+92238.03c       1.87882E-03
+8016.03c        4.25828E-02
+
+mat seed        -10.3024
+92234.03c       3.73911E-05
+92235.03c       4.65393E-03
+92238.03c       1.83438E-02
+8016.03c        4.59793E-02
+
+% --- Cladding material for fuel rod
+%     (100 % natural zirconium)
+
+mat cladding -6.55
+8016.03c       3.08281E-04
+24000.03c      7.58663E-05
+26000.03c      1.48338E-04
+40000.03c      4.24275E-02
+50000.03c      4.81835E-04
+
+% --- Gas gap (Helium)
+mat gas    2.68714E-05  tmp 300 rgb 155 155 0
+2004.03c   2.68714E-05
+
+% --- Water at 0.977 g/cm3
+%     Defined using atomic fractions for the composition. 
+%     Hydrogen is flagged as a bound scatterer with the "moder"-card
+
+mat coolant   -0.977  moder MyThermLib 1001
+1001.03c       6.66295E-02
+8016.03c       3.33339E-02
+
+% --- Define thermal scattering libraries associated with hydrogen in light water
+
+therm MyThermLib lwe7.08t
+
+/************************
+ * Geometry definitions *
+ ************************/
+
+% --- Fuel pin structure
+
+pin ps
+void    0.22
+seed    0.385
+gas     0.3932
+clad    0.4504
+water
+
+pin pl
+blanket 0.4646
+gas     0.4728
+clad    0.53
+water
+
+% --- Square surface with 1.5 cm side centered at (x,y) = (0,0)
+
+surf s1 sqc 0.0 0.0 0.75
+
+% --- Cell c1 belongs to the base universe 0, is filled with the pin p1
+%     and covers everything inside surface s1
+
+cell c1 0 fill p1   -s1
+
+% --- Cell c2 belongs to the base universe 0, is defined as an "outside" cell
+%     and covers everything outside surface s1
+
+cell c2 0 outside    s1
+
+/******************
+ * Run parameters *
+ ******************/
+
+% --- Neutron population: 5000 neutrons per cycle, 100 active / 20 inactive cycles
+
+set pop 5000 100 20
+
+% --- Boundary condition (1 = black, 2 = reflective, 3 = periodic)
+
+set bc 2
+
+% --- Geometry plots
+%     First two plots are perpendicular to z-axis i.e. xy-plots (3)
+
+% --- First plot is 200 by 200 pixels and covers the whole geometry: -0.75 < (x,y) < 0.75
+
+plot 3  200  200
+
+% --- Second plot is 1000 by 1000 pixels, from axial height z = 0.0 
+%     and covers more than the whole geometry: -2.25 < (x,y) < 2.25
+
+plot 3 1000 1000 0.0 -2.25 2.25 -2.25 2.25
+
+% --- The third plot is perpendicular to y-axis (2) i.e. an xz-plot
+
+plot 2  200  200
+
+% --- 200 by 200 pixel meshplot that covers the whole geometry: -0.75 < (x,y) < 0.75
+
+mesh 3  200  200

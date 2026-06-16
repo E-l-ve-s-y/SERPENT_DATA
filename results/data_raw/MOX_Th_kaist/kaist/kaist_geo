@@ -1,0 +1,161 @@
+% ---------------------------------
+
+% --- Geometry definitions --------
+
+% --- pin type definition 
+
+pin 13           % --- fuel uox1
+uox1     0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 14           % --- fuel uox2
+uox2     0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 15           % --- gd ba
+ba       0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 16           % --- mox 4.3
+mox43    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 41           % --- mox 4.3 Th/HM = 0.05
+M43-5    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 42           % --- mox 4.3 Th/HM = 0.1
+M43-10    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 43           % --- mox 4.3 Th/HM = 0.15
+M43-15    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 44           % --- mox 4.3 Th/HM = 0.20
+M43-20    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 45           % --- mox 4.3 Th/HM = 0.25
+M43-25    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 46           % --- mox 4.3 Th/HM = 0.30
+M43-30    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 17           % --- mox 7.0
+mox70    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 71           % --- mox 7.0 Th/HM = 0.05
+M70-5    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 72           % --- mox 7.0 Th/HM = 0.1
+M70-10   0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 73           % --- mox 7.0 Th/HM = 0.15
+M70-15   0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 74           % --- mox 7.0 Th/HM = 0.20
+M70-20   0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 75           % --- mox 7.0 Th/HM = 0.25
+M70-25   0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 76           % --- mox 7.0 Th/HM = 0.30
+M70-30   0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 18           % --- mox 8.7
+mox87    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 81           % --- mox 8.7 Th/HM = 0.05
+M87-5    0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 82           % --- mox 8.7 Th/HM = 0.1
+M87-10   0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 83           % --- mox 8.7 Th/HM = 0.15
+M87-15   0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 84           % --- mox 8.7 Th/HM = 0.20
+M87-20   0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 85           % --- mox 8.7 Th/HM = 0.25
+M87-25   0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 86           % --- mox 8.7 Th/HM = 0.30
+M87-30   0.4095
+gas      0.4180
+clad     0.4750
+mod2
+
+pin 21           % --- GT
+mod2     0.5715
+clad     0.6120
+mod2
+
+pin 33            % ---cr
+b4c      0.3823
+clad     0.4839
+mod2     0.5715
+clad     0.6120
+mod2

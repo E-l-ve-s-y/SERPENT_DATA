@@ -1,0 +1,128 @@
+% --- Blanket fuel pin (PL) for Serpent
+%     Independent burnup calculation
+
+/************************
+ * Material definitions *
+ ************************/
+
+mat blanket     -9.3624     tmp 300 burn 1
+90232.03c       1.92190E-02
+92234.03c       1.71043E-06
+92235.03c       2.11428E-04
+92238.03c       1.87882E-03
+8016.03c        4.25828E-02
+
+mat clad -6.55
+8016.03c       3.08281E-04
+24000.03c      7.58663E-05
+26000.03c      1.48338E-04
+40000.03c      4.24275E-02
+50000.03c      4.81835E-04
+
+mat gas    2.68714E-05  tmp 300 rgb 155 155 0
+2004.03c   2.68714E-05
+
+mat water   -0.977  moder MyThermLib 1001
+1001.03c       6.66295E-02
+8016.03c       3.33339E-02
+
+therm MyThermLib lwe7.08t
+
+/************************
+ * Geometry definitions *
+ ************************/
+
+pin pl
+blanket 0.4646
+gas     0.4728
+clad    0.53
+water
+
+surf s1 sqc 0.0 0.0 0.63
+
+cell c1 0 fill pl  -s1
+cell c2 0 outside   s1
+
+% =============================================================================
+% --- Burnup calculation ----------
+% =============================================================================
+
+% --- Power density (MW/kgHM) - typical LWR value
+set powdens 0.02259
+set pcc LELI
+
+% --- Depletion history (burnup steps in MWd/kgHM)
+dep butot
+ 1
+ 2
+ 3
+ 4
+ 5
+ 6
+ 7
+ 8
+ 9
+ 10
+ 11
+ 12
+ 13
+ 14
+ 15
+ 16
+ 17
+ 18
+ 19
+ 20
+ 25
+ 30
+ 35
+ 40
+ 45
+ 50
+ 55
+ 60
+ 65
+ 70
+ 75
+ 80
+ 85
+ 90
+ 95
+ 100
+ 105
+ 110
+ 115
+ 120
+
+% --- Isotope list for inventory calculation (key isotopes)
+set inventory
+% --- Actinides
+902320    % Th-232
+912330    % Pa-233
+922330    % U-233
+922340    % U-234
+922350    % U-235
+922360    % U-236
+922380    % U-238
+932370    % Np-237
+942380    % Pu-238
+942390    % Pu-239
+942400    % Pu-240
+942410    % Pu-241
+942420    % Pu-242
+952410    % Am-241
+952430    % Am-243
+
+/******************
+ * Run parameters *
+ ******************/
+
+set pop 5000 100 20
+set bc 2
+
+plot 3  200  200
+mesh 3  200  200
+
+set acelib "/home/sy_lu/data/endfb7/sss_endfb7u.xsdata"
+set declib "/home/sy_lu/data/endfb7/sss_endfb7.dec"
+set nfylib "/home/sy_lu/data/endfb7/sss_endfb7.nfy"

@@ -1,0 +1,36 @@
+import numpy as np
+# 读取探测器数据，使用 genfromtxt 以容错不规则行/列
+det_data = np.genfromtxt('D001.sss_det0 copy.m', skip_header=1, comments='%', invalid_raise=False, dtype=float)
+# 如果读取结果是一维（单行或单列），将其转换为二维数组以便统一处理
+if det_data.ndim == 1:
+    det_data = det_data.reshape(1, -1)
+# 水洞行号（1-indexed，文件中行号）
+water_hole_rows = [40, 43, 46, 55, 65, 88, 91, 94, 97, 100, 
+                   139, 142, 145, 148, 151, 190, 193, 196, 199, 202,
+                   225, 235, 244, 247, 250, 329, 332, 335, 344, 354,
+                   377, 380, 383, 386, 389, 428, 431, 434, 437, 440,
+                   479, 482, 485, 488, 491, 514, 524, 533, 536, 539]
+# 转换为0-indexed
+# 转换为0-indexed，并丢弃超出范围的索引（防止错误）
+water_hole_idx = [r-1 for r in water_hole_rows]
+# 提取探测器响应值 (第11列，0-indexed为第10列)
+# 提取第11列（索引10）作为探测器响应值，允许 NaN 存在
+if det_data.shape[1] <= 10:
+    raise ValueError('探测器文件列数不足，无法读取第11列响应值')
+response = det_data[:, 10]
+# 丢弃超出范围的水洞索引
+water_hole_idx = [i for i in water_hole_idx if i >= 0 and i < len(response)]
+# 排除水洞行并移除 NaN
+mask = np.ones(len(response), dtype=bool)
+mask[water_hole_idx] = False
+fuel_response = response[mask]
+fuel_response = fuel_response[~np.isnan(fuel_response)]
+# Th232原子密度 (atoms/barn/cm)
+N_Th232 = 1.55389E-02
+# 计算宏观反应率
+calc_rate = np.sum(fuel_response) * N_Th232
+# 参考值 from res file
+ref_rate = 4.66158E+14
+print(f"计算值: {calc_rate:.4e}")
+print(f"参考值: {ref_rate:.4e}")
+print(f"差异:   {(calc_rate/ref_rate - 1)*100:.2f}%")

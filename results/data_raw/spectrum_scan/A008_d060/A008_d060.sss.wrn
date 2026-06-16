@@ -1,0 +1,86 @@
+
+ ***** Warning: Serpent 1 input option outfile on line 241 of file A008_d060.sss not used
+
+
+***** Tue Jun  9 04:53:16 2026 (seed = 1780951979458)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 40096.06c has 1 decay modes
+
+
+***** Tue Jun  9 04:53:16 2026 (seed = 1780951979458)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 40096.09c has 1 decay modes
+
+
+***** Tue Jun  9 04:53:16 2026 (seed = 1780951979458)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 48114.09c has 1 decay modes
+
+
+***** Tue Jun  9 04:53:16 2026 (seed = 1780951979458)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 52123.09c has 1 decay modes
+
+
+***** Tue Jun  9 04:53:16 2026 (seed = 1780951979458)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 52130.09c has 1 decay modes
+
+
+***** Tue Jun  9 04:53:16 2026 (seed = 1780951979458)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 54134.09c has 1 decay modes
+
+
+***** Tue Jun  9 04:53:16 2026 (seed = 1780951979458)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 54136.09c has 1 decay modes
+
+
+***** Tue Jun  9 04:53:16 2026 (seed = 1780951979458)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 58142.09c has 1 decay modes
+
+
+***** Tue Jun  9 04:53:16 2026 (seed = 1780951979458)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 64160.09c has 1 decay modes
+
+
+***** Tue Jun  9 04:53:16 2026 (seed = 1780951979458)
+Warning message from function CheckNuclideData:
+
+Stable nuclide 300700 has 1 decay modes
+
+
+***** Tue Jun  9 08:35:09 2026 (seed = 1780951979458)
+Warning message from function SamplePrecursorGroup:
+
+Precursor group sampling failed (92233.09c, mt 18, E = 5.182615E-08)
+
+
+***** Tue Jun  9 18:23:00 2026 (seed = 1780951979458)
+Warning message from function SamplePrecursorGroup:
+
+Precursor group sampling failed (92238.09c, mt 18, E = 3.143198E+00)
+
+
+***** Tue Jun  9 19:27:57 2026 (seed = 1780951979458)
+Warning message from function SamplePrecursorGroup:
+
+Precursor group sampling failed (90232.09c, mt 18, E = 1.778550E+00)
+
+
+Simulation completed.
+------------------------------------------------------------
+Wed Jun 10 01:41:36 2026  (errors: 0, warnings: 13, notes: 1)
+
