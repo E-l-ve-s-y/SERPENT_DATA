@@ -25,3 +25,5 @@ Thumbs.db
 *.log
 
 results/analysis/
+
+.png
