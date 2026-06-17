@@ -9,6 +9,11 @@ family, mox1 baseline).  The mox1 baseline is drawn as a black
 dashed reference; the Th-fraction cases are colour-coded so that
 the gradient reflects the Th loading.
 
+For the Th-only isotopes (U233, Pa233, Th232) the mox1 baseline is
+omitted because MOX fuel has no thorium feed - plotting mox1 would
+be uninformative and visually distracting.  The same exclusion is
+applied to the long-format CSV and the end-of-burnup pivot table.
+
 Output: results/analysis/MOX_Th_kaist/kaist/Isotope_comparison/
 """
 
@@ -34,6 +39,11 @@ from kaist_utils import (
 _M43 = re.compile(r"^M43-(\d+)$")
 _M87 = re.compile(r"^M87-(\d+)$")
 
+# Isotopes that originate exclusively from the thorium chain.  The mox1
+# baseline (pure MOX) has no thorium feed, so plotting it for these
+# isotopes would be uninformative and is therefore skipped.
+TH_ONLY_ISOTOPES = frozenset({"U233", "Pa233", "Th232"})
+
 
 def family(case):
     if case.lower() == "mox1":
@@ -55,7 +65,12 @@ def th_fraction(case):
 def build_colormap(cases):
     """Return a {case: colour} mapping with M43 in Blues, M87 in Oranges."""
     colours = {}
-    for fam, cmap in [("M43", plt.cm.Blues), ("M87", plt.cm.Oranges)]:
+    # Use matplotlib.colormaps[name] (the modern, fully-typed API) instead
+    # of plt.cm.<name> attribute access, which triggers a Pylance false
+    # positive: the named colormaps are registered dynamically on the
+    # ColormapRegistry, not as static module attributes.
+    for fam, cmap_name in [("M43", "Blues"), ("M87", "Oranges")]:
+        cmap = plt.colormaps[cmap_name]
         members = sorted([c for c in cases if family(c) == fam], key=th_fraction)
         n = max(1, len(members) - 1)
         for i, c in enumerate(members):
@@ -71,9 +86,16 @@ def build_colormap(cases):
 # --- per-isotope plotting ---------------------------------------------------
 
 def collect_data(isotope, cases):
-    """Return {case: (burnup, adens)} for one isotope across all cases."""
+    """Return {case: (burnup, adens)} for one isotope across all cases.
+
+    For Th-only isotopes (U233, Pa233, Th232) the mox1 baseline is
+    skipped because MOX fuel has no thorium feed.
+    """
     out = {}
+    th_only = isotope in TH_ONLY_ISOTOPES
     for case in cases:
+        if th_only and family(case) == "mox":
+            continue
         mats = list_materials(case)
         mat = pick_th_material(case, mats)
         if mat is None:

@@ -7,6 +7,11 @@ kaist case, sum them, and plot the capture response, its fractional
 contribution, and its cumulative distribution. Also write a
 per-energy-region table to CSV.
 
+The absolute response view is split into three family-specific plots
+(M43, M70, M87) that share the same y-axis range so the plots are
+directly comparable across families.  Each family keeps its own
+colormap gradient: Blues for M43, Greens for M70, Oranges for M87.
+
 Output: results/analysis/MOX_Th_kaist/kaist/Th232_capture/
 """
 
@@ -27,6 +32,38 @@ from kaist_utils import (
 THERMAL_LIMIT = 5e-7
 EPITHERMAL_LIMIT = 1e-4
 RESONANCE_LIMIT = 1e-1
+
+# Fuel-family -> colormap name.  The three families each get a distinct
+# sequential colormap so the gradient is consistent with the convention
+# used in plot_isotope_comparison.py (Blues for M43, Oranges for M87);
+# M70 is assigned Greens, the natural third in matplotlib's standard
+# sequential family.
+FAMILY_COLORMAPS = {
+    "M43": "Blues",
+    "M70": "Greens",
+    "M87": "Oranges",
+}
+
+
+def get_family(case):
+    """Return the fuel-family tag (M43 / M70 / M87) for a case name."""
+    m = re.match(r"^(M\d+)-", case)
+    return m.group(1) if m and m.group(1) in FAMILY_COLORMAPS else "other"
+
+
+def family_palette(family, cases):
+    """Return {case: colour} for cases in `family`, sorted by Th fraction.
+
+    Lightest shade is assigned to the lowest Th fraction, darkest to the
+    highest, matching the gradient convention in plot_isotope_comparison.py.
+    """
+    cmap = plt.colormaps[FAMILY_COLORMAPS[family]]
+    members = sorted(
+        [c for c in cases if get_family(c) == family],
+        key=lambda c: int(c.split("-")[1]),
+    )
+    n = max(1, len(members) - 1)
+    return {c: cmap(0.3 + 0.6 * i / n) for i, c in enumerate(members)}
 
 
 def _read_text(path):
@@ -93,24 +130,63 @@ def get_region_fractions(E_mid, response):
     }
 
 
-def plot_all(captures, out_dir):
-    """Generate all three plots."""
+def plot_response_by_family(captures, out_dir):
+    """Generate one absolute-response plot per family (M43, M70, M87).
+
+    All three plots share the same y-axis range so they are directly
+    comparable across families.  Each family uses its own colormap
+    gradient (Blues / Greens / Oranges) with the lightest shade at the
+    lowest Th fraction and the darkest at the highest.
+
+    The x-axis is logarithmic (lethargy-style energy grid) and the
+    y-axis is linear on a shared range computed across all cases.
+    """
+    cases = list(captures.keys())
+
+    # Global y-range from positive response values only, in linear space.
+    finite_R = [R[R > 0] for _, (_, R) in captures.items() if (R > 0).any()]
+    if not finite_R:
+        print("  [skip] No positive response values to plot")
+        return
+    ymin = float(min(r.min() for r in finite_R))
+    ymax = float(max(r.max() for r in finite_R))
+    pad = 0.05 * (ymax - ymin)
+    ylim = (max(0.0, ymin - pad), ymax + pad)
+    print(f"  Shared ylim: [{ylim[0]:.3e}, {ylim[1]:.3e}]")
+
+    for fam in ["M43", "M70", "M87"]:
+        palette = family_palette(fam, cases)
+        if not palette:
+            print(f"  [skip] No cases for family {fam}")
+            continue
+
+        fig, ax = plt.subplots(figsize=(9, 6))
+        for case, color in palette.items():
+            E, R = captures[case]
+            ax.semilogx(E, R, marker='o', markersize=4, linewidth=1.4,
+                        color=color, label=case)
+        ax.set_ylim(*ylim)
+        ax.set_xlabel("Energy (MeV)")
+        ax.set_ylabel("Th-232 capture response (per lethargy)")
+        ax.set_title(f"Total Th-232 capture spectrum - {fam} family")
+        ax.grid(True, which='both', alpha=0.3)
+        ax.legend(fontsize=9)
+        fig.tight_layout()
+        out_path = out_dir / f"Th232_capture_response_{fam}.png"
+        fig.savefig(out_path, dpi=300, bbox_inches="tight")
+        plt.close(fig)
+        print(f"  Saved: {out_path.name}")
+
+
+def plot_normalized(captures, out_dir):
+    """Generate the fractional-contribution and cumulative-distribution plots.
+
+    These views use the normalized response (per case) so a single y-axis
+    is meaningful across all cases regardless of absolute magnitude.
+    """
     if not captures:
         return
-    
-    # Absolute response
-    fig, ax = plt.subplots(figsize=(9, 6))
-    for case, (E, R) in captures.items():
-        ax.semilogx(E, R, marker='o', markersize=4, linewidth=1.4, label=case)
-    ax.set_xlabel("Energy (MeV)")
-    ax.set_ylabel("Th-232 capture response (per lethargy)")
-    ax.set_title("Total Th-232 capture spectrum (cap1+cap2+cap3)")
-    ax.grid(True, which='both', alpha=0.3)
-    ax.legend(fontsize=9)
-    fig.tight_layout()
-    fig.savefig(out_dir / "Th232_capture_response.png", dpi=300, bbox_inches="tight")
-    plt.close(fig)
-    
+
     # Fractional contribution
     fig, ax = plt.subplots(figsize=(9, 6))
     for case, (E, R) in captures.items():
@@ -125,7 +201,7 @@ def plot_all(captures, out_dir):
     fig.tight_layout()
     fig.savefig(out_dir / "Th232_capture_fraction.png", dpi=300, bbox_inches="tight")
     plt.close(fig)
-    
+
     # Cumulative distribution
     fig, ax = plt.subplots(figsize=(9, 6))
     for case, (E, R) in captures.items():
@@ -165,7 +241,8 @@ def main():
         print("No Th-232 capture data found.")
         return
     
-    plot_all(captures, out_dir)
+    plot_response_by_family(captures, out_dir)
+    plot_normalized(captures, out_dir)
     
     # Save region contribution table
     df = pd.DataFrame(table).T[["Thermal", "Epithermal", "Resonance", "Fast"]]

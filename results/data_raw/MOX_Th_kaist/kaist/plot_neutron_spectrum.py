@@ -6,9 +6,17 @@ For each *_detN.m file in every case folder, overlay the 70-group
 DET1 spectrum from all cases on a single log-x plot, plus the
 thermal / resonance / fast fractions in a text summary.
 
+The per-detector view is split into three family-specific plots
+(M87, M70, M43) that mirror the colour scheme used in
+plot_th232_capture_response.py: Blues for M43, Greens for M70,
+Oranges for M87 (lightest shade = lowest Th fraction, darkest =
+highest).  Each detector / kind combination therefore produces
+three PNGs (M87 / M70 / M43) instead of one combined plot.
+
 Output: results/analysis/MOX_Th_kaist/kaist/Neutron_spectra/
 """
 
+import re
 import sys
 from pathlib import Path
 
@@ -16,6 +24,35 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from kaist_utils import OUTPUT_DIR, discover_cases, ensure_dir, read_spectrum
+
+# Family -> colormap name.  Same convention as plot_th232_capture_response.py
+# and plot_reactivity_breeding_tradeoff.py: M43=Blues, M70=Greens, M87=Oranges.
+FAMILY_COLORMAPS = {
+    "M43": "Blues",
+    "M70": "Greens",
+    "M87": "Oranges",
+}
+
+
+def get_family(case):
+    """Return the fuel-family tag (M43 / M70 / M87) for a case name."""
+    m = re.match(r"^(M\d+)-", case)
+    return m.group(1) if m and m.group(1) in FAMILY_COLORMAPS else "other"
+
+
+def family_palette(family, cases):
+    """Return {case: colour} for cases in `family`, sorted by Th fraction.
+
+    Lightest shade is assigned to the lowest Th fraction, darkest to the
+    highest, matching the gradient convention in the other plots.
+    """
+    cmap = plt.colormaps[FAMILY_COLORMAPS[family]]
+    members = sorted(
+        [c for c in cases if get_family(c) == family],
+        key=lambda c: int(c.split("-")[1]),
+    )
+    n = max(1, len(members) - 1)
+    return {c: cmap(0.3 + 0.6 * i / n) for i, c in enumerate(members)}
 
 
 # Process detector 0..25
@@ -37,7 +74,13 @@ def fractions(phi_u, E_mid):
 
 
 def plot_detector(det_num, results, out_dir):
-    """Save normalized and absolute comparison plots for one detector."""
+    """Save family-split normalized and absolute comparison plots for one detector.
+
+    For each of (normalized, absolute), generate one PNG per family
+    (M87, M70, M43) using the family colormap gradient.  Old combined
+    PNGs from previous runs are removed by `cleanup_old_plots()` in
+    `main()`.
+    """
     if not results:
         return
 
@@ -45,22 +88,46 @@ def plot_detector(det_num, results, out_dir):
         ("normalized", "flux_norm", "Normalized flux per lethargy"),
         ("absolute", "phi_u", "Flux per lethargy (absolute)"),
     ]:
-        fig, ax = plt.subplots(figsize=(10, 6))
-        for case, data in results.items():
-            ax.semilogx(data["E_mid"], data[key], marker="o", markersize=3,
-                        linewidth=1.2, label=case)
-        ax.set_xlabel("Energy (MeV)")
-        ax.set_ylabel(ylabel)
-        ax.set_title(f"DET{det_num} - {kind} neutron spectrum (MOX_Th_kaist)")
-        ax.grid(True, which="both", alpha=0.3)
-        ax.legend(loc="best", fontsize=8)
-        fig.tight_layout()
-        fig.savefig(out_dir / f"{kind}_detector_{det_num}.png", dpi=300, bbox_inches="tight")
-        plt.close(fig)
+        for fam in ["M87", "M70", "M43"]:
+            palette = family_palette(fam, results.keys())
+            if not palette:
+                continue
+            fig, ax = plt.subplots(figsize=(10, 6))
+            for case, color in palette.items():
+                data = results[case]
+                ax.semilogx(data["E_mid"], data[key], marker="o", markersize=3,
+                            linewidth=1.2, color=color, label=case)
+            ax.set_xlabel("Energy (MeV)")
+            ax.set_ylabel(ylabel)
+            ax.set_title(f"DET{det_num} - {kind} neutron spectrum ({fam} family)")
+            ax.grid(True, which="both", alpha=0.3)
+            ax.legend(loc="best", fontsize=8)
+            fig.tight_layout()
+            out_path = out_dir / f"{kind}_detector_{det_num}_{fam}.png"
+            fig.savefig(out_path, dpi=300, bbox_inches="tight")
+            plt.close(fig)
+
+
+def cleanup_old_plots(out_dir):
+    """Remove combined PNGs from the previous (pre-split) plot layout.
+
+    The new layout is `{kind}_detector_{n}_{fam}.png`; the old layout was
+    `{kind}_detector_{n}.png` (no family suffix).  Anything that does not
+    match the new family-suffix pattern is considered obsolete.
+    """
+    removed = 0
+    for prefix in ("normalized_detector_", "absolute_detector_"):
+        for old_path in out_dir.glob(f"{prefix}*.png"):
+            if not re.search(r"_M\d+\.png$", old_path.name):
+                old_path.unlink()
+                removed += 1
+    if removed:
+        print(f"  Cleaned up {removed} old combined PNG(s)")
 
 
 def main():
     out_dir = ensure_dir(OUTPUT_DIR / "Neutron_spectra")
+    cleanup_old_plots(out_dir)
     log_path = Path(__file__).resolve().parent / "neutron_spectrum.log"
     cases = discover_cases()
     print(f"Discovered {len(cases)} cases: {cases}")
