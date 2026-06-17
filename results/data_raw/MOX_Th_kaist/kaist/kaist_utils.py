@@ -23,8 +23,8 @@ import numpy as np
 # =============================================================================
 # Paths
 # =============================================================================
-BASE_DIR = Path(r"C:\Users\lsy05\serpent_data\results\data_raw\MOX_Th_kaist\kaist")
-OUTPUT_DIR = Path(r"C:\Users\lsy05\serpent_data\results\analysis\MOX_Th_kaist\kaist")
+BASE_DIR = Path(r"D:\serpent_data\results\data_raw\MOX_Th_kaist\kaist")
+OUTPUT_DIR = Path(r"D:\serpent_data\results\analysis\MOX_Th_kaist\kaist")
 
 # =============================================================================
 # Target isotopes

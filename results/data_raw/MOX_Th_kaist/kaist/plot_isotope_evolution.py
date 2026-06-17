@@ -20,7 +20,7 @@ from kaist_utils import (
     get_isotope_adens,
     list_materials,
     pick_th_material,
-    read_material_burnup,
+    read_global_burnup,
 )
 
 
@@ -76,7 +76,7 @@ def collect_final_state(case, mat):
         except ValueError:
             row[iso] = float("nan")
     # burnup from the material's own BURNUP array
-    row["burnup_end"] = float(read_material_burnup(case, mat)[-1])
+    row["burnup_end"] = float(read_global_burnup(case)[-1])
     # conversion index
     try:
         _, th = get_isotope_adens(case, mat, "Th232")
