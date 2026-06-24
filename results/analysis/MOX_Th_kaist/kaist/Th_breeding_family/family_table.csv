@@ -1,0 +1,4 @@
+family,n_th_rods,thermal_fraction_pct,Th_capture_rate_R_Th,Th_capture_rate_per_rod,NU233final,n_th_rods_norm,thermal_fraction_pct_norm,Th_capture_rate_R_Th_norm,Th_capture_rate_per_rod_norm,NU233final_norm
+M43,68,9.479213e+01,5.922647e+13,8.709775e+11,1.122771e-04,1.000000e+00,1.000000e+00,1.000000e+00,1.000000e+00,1.000000e+00
+M70,128,9.479149e+01,1.100826e+14,8.600199e+11,1.141576e-04,1.882353e+00,9.999932e-01,1.858672e+00,9.874193e-01,1.016748e+00
+M87,68,9.480593e+01,5.573277e+13,8.195995e+11,1.150760e-04,1.000000e+00,1.000146e+00,9.410112e-01,9.410112e-01,1.024928e+00
